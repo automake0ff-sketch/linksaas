@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { IamModule } from './modules/iam/iam.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
+import { PublicPagesModule } from './modules/public-pages/public-pages.module';
 import { SharedInfraModule } from './shared/infrastructure/shared-infra.module';
 import { TenantMiddleware } from './shared/middleware/tenant.middleware';
 import { PublicAuthGuard } from './shared/auth/public-route.guard';
@@ -25,6 +26,7 @@ import { envSchema } from './config/env.schema';
     SharedInfraModule,
     IamModule,
     TenancyModule,
+    PublicPagesModule,
     // PagesModule, ThemesModule, AnalyticsModule... se añaden en los
     // siguientes incrementos (Fase A).
   ],

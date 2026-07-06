@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: #FFFFFF;
+  --surface-2: #F4F5F8;
+  --text-primary: #12151C;
+  --text-secondary: #5B6270;
+  --border: #E3E5EA;
+  --accent: #3454D1;
+  --success: #16A34A;
+  --danger: #DC2626;
+  --warning: #D97706;
+}
+
+.dark {
+  --surface: #0B0D12;
+  --surface-2: #141821;
+  --text-primary: #F2F3F5;
+  --text-secondary: #9AA1AE;
+  --border: #242938;
+  --accent: #5B7CFA;
+  --success: #22C55E;
+  --danger: #F87171;
+  --warning: #FBBF24;
+}
+
+body {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+/* Respeta preferencia de movimiento reducido en todas las transiciones */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
