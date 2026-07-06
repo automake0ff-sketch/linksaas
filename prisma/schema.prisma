@@ -1,0 +1,223 @@
+// LinkForge — Esquema Prisma
+// Fase 0 (Fundación) + Fase A (páginas/temas). Comercio, workflows y plugins
+// se añaden en Fase B/C sin romper este esquema (ver docs/03-Base-de-Datos.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Identidad ────────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  email             String    @unique
+  emailVerifiedAt   DateTime? @map("email_verified_at")
+  name              String?
+  avatarUrl         String?   @map("avatar_url")
+  twoFactorEnabled  Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret   String?   @map("two_factor_secret")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  authMethods       AuthMethod[]
+  ownedOrgs         Organization[] @relation("OrgOwner")
+  memberships       Member[]
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+enum AuthProvider {
+  google
+  apple
+  github
+  passkey
+  magic_link
+  password
+}
+
+model AuthMethod {
+  id                    String       @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  userId                String       @map("user_id") @db.Uuid
+  provider              AuthProvider
+  providerAccountId     String?      @map("provider_account_id")
+  credentialPublicKey   Bytes?       @map("credential_public_key")
+  credentialCounter     BigInt?      @map("credential_counter")
+  passwordHash          String?      @map("password_hash")
+  createdAt             DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("auth_methods")
+}
+
+// ── Tenancy ──────────────────────────────────────────────────
+
+enum Plan {
+  free
+  pro
+  business
+  agency
+}
+
+model Organization {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name      String
+  ownerId   String   @map("owner_id") @db.Uuid
+  plan      Plan     @default(free)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner      User        @relation("OrgOwner", fields: [ownerId], references: [id])
+  workspaces Workspace[]
+  subscriptions Subscription[]
+
+  @@map("organizations")
+}
+
+model Workspace {
+  id             String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  slug           String    @unique
+  displayName    String    @map("display_name")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  domains      Domain[]
+  roles        Role[]
+  members      Member[]
+  pages        Page[]
+  themes       Theme[]
+  auditLogs    AuditLog[]
+
+  @@map("workspaces")
+}
+
+model Domain {
+  id                 String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId        String   @map("workspace_id") @db.Uuid
+  hostname           String   @unique
+  verificationStatus String   @default("pending") @map("verification_status")
+  verificationToken  String   @map("verification_token")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("domains")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId String?  @map("workspace_id") @db.Uuid // null = rol de sistema (owner/admin/editor/viewer)
+  name        String
+  permissions Json     @default("[]")
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members   Member[]
+
+  @@map("roles")
+}
+
+model Member {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  roleId      String   @map("role_id") @db.Uuid
+  invitedBy   String?  @map("invited_by") @db.Uuid
+  status      String   @default("active") // invited | active | suspended
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId], references: [id])
+
+  @@unique([workspaceId, userId])
+  @@map("members")
+}
+
+// ── Páginas y temas (Fase A, incluidas ya en el esquema base) ──
+
+model Theme {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId String?  @map("workspace_id") @db.Uuid // null = tema del sistema
+  name        String
+  tokens      Json
+  customCss   String?  @map("custom_css")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  pages     Page[]
+
+  @@map("themes")
+}
+
+model Page {
+  id                  String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId         String   @map("workspace_id") @db.Uuid
+  slug                String
+  title               String?
+  publishedVersionId  String?  @map("published_version_id") @db.Uuid
+  draftVersionId      String?  @map("draft_version_id") @db.Uuid
+  themeId             String?  @map("theme_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  theme     Theme?        @relation(fields: [themeId], references: [id])
+  versions  PageVersion[]
+
+  @@unique([workspaceId, slug])
+  @@map("pages")
+}
+
+model PageVersion {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  pageId    String   @map("page_id") @db.Uuid
+  blocks    Json
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("page_versions")
+}
+
+// ── Facturación de la plataforma (stub Fase 0, se completa en Fase B) ──
+
+model Subscription {
+  id                     String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId         String   @map("organization_id") @db.Uuid
+  provider               String
+  providerSubscriptionId String   @map("provider_subscription_id")
+  plan                   String
+  status                 String
+  currentPeriodEnd       DateTime? @map("current_period_end")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ── Auditoría (transversal desde Fase 0) ────────────────────────
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId String?  @map("workspace_id") @db.Uuid
+  actorId     String?  @map("actor_id") @db.Uuid
+  action      String
+  metadata    Json     @default("{}")
+  ip          String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor     User?      @relation(fields: [actorId], references: [id])
+
+  @@map("audit_logs")
+}

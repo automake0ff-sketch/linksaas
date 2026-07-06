@@ -1,0 +1,31 @@
+{
+  "name": "linkforge",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:web-app": "npm run dev --workspace=apps/web-app",
+    "dev:web-public": "npm run dev --workspace=apps/web-public",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
+    "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
+    "prisma:studio": "prisma studio --schema=prisma/schema.prisma",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "prisma": "^5.20.0",
+    "typescript": "^5.6.0",
+    "ts-node": "^10.9.2"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
