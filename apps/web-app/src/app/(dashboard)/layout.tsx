@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { LayoutGrid, Palette, BarChart3, Settings, LogOut } from 'lucide-react';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
+import { useActiveWorkspaceStore } from '@/store/active-workspace-store';
 
 const NAV = [
   { label: 'Editor', icon: LayoutGrid, href: '/dashboard' },
@@ -16,7 +16,8 @@ const NAV = [
 const MOCK_WORKSPACES = [{ id: 'w1', slug: 'ana', displayName: 'Ana Torres' }];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [activeWorkspace, setActiveWorkspace] = useState(MOCK_WORKSPACES[0].id);
+  const activeWorkspace = useActiveWorkspaceStore((s) => s.workspaceId);
+  const setActiveWorkspace = useActiveWorkspaceStore((s) => s.setWorkspaceId);
 
   return (
     <div className="flex min-h-screen bg-surface-2">
@@ -45,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </button>
       </aside>
 
-      <main className="flex-1 p-8">{children}</main>
+      <main className="flex-1 overflow-hidden">{children}</main>
     </div>
   );
 }

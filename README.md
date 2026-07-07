@@ -26,6 +26,8 @@ Además, en este incremento:
 - **`web-app`**: layout con sistema de tipografía propio (Space Grotesk/Inter/JetBrains Mono), tokens de color claro/oscuro, páginas de registro/login con React Hook Form + Zod conectadas a la API real, shell de dashboard con el conmutador de workspace (elemento de firma visual).
 - **`web-public`**: página `[slug]` con SSR, metadata dinámica (OpenGraph, Twitter Cards, JSON-LD Schema.org), `robots.ts`/`sitemap.ts`, renderer de bloques (link/text/social/image), beacon de analítica de vista.
 - **API**: endpoints públicos de solo lectura (`GET /public/pages/:slug`, `POST /public/events`) que conectan `web-public` de extremo a extremo con la base de datos real.
+- **Módulo `pages` (API)**: agregado `Page` con las reglas del editor (añadir/actualizar/eliminar/duplicar/reordenar bloques, límite de 100 bloques, publicar con snapshot inmutable en `PageVersion`, restaurar versión). Listener `CreateRootPageOnWorkspaceCreated` simétrico al de `tenancy` — cada workspace nuevo nace con una página raíz vacía, sin acoplar `pages` a `tenancy`.
+- **Editor visual drag&drop (`web-app`)**: biblioteca de bloques, lista reordenable con `@dnd-kit`, panel de propiedades por tipo de bloque, marco de dispositivo (móvil/tablet/desktop) como elemento de firma visual, deshacer/rehacer con historial en memoria (`zustand`), autosave con debounce (800ms) contra `PUT /workspaces/:id/page/draft`, y publicación explícita separada del borrador.
 - `packages/contracts`: esquemas Zod compartidos (bloques, tema, auth) entre las tres piezas — un solo punto de verdad para estas formas de datos.
 
 ## Pendiente para cerrar Fase 0 / avanzar Fase A (próximos incrementos)
@@ -35,9 +37,12 @@ Además, en este incremento:
 - 2FA (TOTP) — completar `VerifyTwoFactorUseCase` (el login ya detecta `requiresTwoFactor`).
 - Invitación de miembros que aún no tienen cuenta (tabla `workspace_invitations` + email).
 - `RefreshTokenUseCase` con rotación y detección de reuse.
-- Editor visual drag&drop en `web-app` (Fase A) — hoy hay un placeholder en `/dashboard`.
+- `GET /workspaces` real en `web-app` — hoy el conmutador de workspace y el editor usan un workspace de ejemplo fijo (`useActiveWorkspaceStore`).
+- Editor de propiedades específico para los tipos de bloque restantes (video, embed, galería, FAQ, countdown, formulario, producto, HTML, markdown) — el dominio ya los admite (`BLOCK_TYPES`), solo falta su UI.
+- Panel de historial de versiones en `web-app` (la API ya expone `GET/POST .../versions`).
+- Sistema de temas (Fase A, siguiente pieza natural tras el editor).
 - `avatarUrl`/`bio` en el modelo `Page` (hoy el endpoint público los devuelve como `null` — falta el campo en Prisma).
-- Extraer `BlockRenderer` a `packages/block-renderer` cuando el editor lo necesite también para preview en vivo (mismo renderer en ambas apps, ver docs/02-Arquitectura.md §5).
+- Extraer `EditorBlockPreview`/`BlockRenderer` a `packages/block-renderer` compartido (hoy son dos copias con la misma forma, documentado en ambos archivos).
 - Migración inicial de Prisma aplicada + políticas RLS generadas por script (una por tabla con `workspace_id`).
 
 ## Cómo correr en local

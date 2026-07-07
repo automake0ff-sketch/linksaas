@@ -163,10 +163,11 @@ model Page {
   workspaceId         String   @map("workspace_id") @db.Uuid
   slug                String
   title               String?
+  draftBlocks         Json     @default("[]") @map("draft_blocks")
   publishedVersionId  String?  @map("published_version_id") @db.Uuid
-  draftVersionId      String?  @map("draft_version_id") @db.Uuid
   themeId             String?  @map("theme_id") @db.Uuid
   createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   theme     Theme?        @relation(fields: [themeId], references: [id])
