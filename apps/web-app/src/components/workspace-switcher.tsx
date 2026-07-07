@@ -20,10 +20,12 @@ export function WorkspaceSwitcher({
   workspaces,
   activeId,
   onSelect,
+  onCreateWorkspace,
 }: {
   workspaces: WorkspaceOption[];
   activeId: string;
   onSelect: (id: string) => void;
+  onCreateWorkspace: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const active = workspaces.find((w) => w.id === activeId) ?? workspaces[0];
@@ -79,7 +81,13 @@ export function WorkspaceSwitcher({
             </li>
           ))}
           <li>
-            <button className="mt-1 flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-text-secondary hover:bg-surface-2">
+            <button
+              onClick={() => {
+                onCreateWorkspace();
+                setOpen(false);
+              }}
+              className="mt-1 flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-text-secondary hover:bg-surface-2"
+            >
               <Plus className="h-4 w-4" /> Crear espacio
             </button>
           </li>

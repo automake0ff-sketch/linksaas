@@ -28,6 +28,7 @@ Además, en este incremento:
 - **API**: endpoints públicos de solo lectura (`GET /public/pages/:slug`, `POST /public/events`) que conectan `web-public` de extremo a extremo con la base de datos real.
 - **Módulo `pages` (API)**: agregado `Page` con las reglas del editor (añadir/actualizar/eliminar/duplicar/reordenar bloques, límite de 100 bloques, publicar con snapshot inmutable en `PageVersion`, restaurar versión). Listener `CreateRootPageOnWorkspaceCreated` simétrico al de `tenancy` — cada workspace nuevo nace con una página raíz vacía, sin acoplar `pages` a `tenancy`.
 - **Editor visual drag&drop (`web-app`)**: biblioteca de bloques, lista reordenable con `@dnd-kit`, panel de propiedades por tipo de bloque, marco de dispositivo (móvil/tablet/desktop) como elemento de firma visual, deshacer/rehacer con historial en memoria (`zustand`), autosave con debounce (800ms) contra `PUT /workspaces/:id/page/draft`, y publicación explícita separada del borrador.
+- **Workspaces reales**: `GET /workspaces` (lista los del usuario autenticado) y creación desde un diálogo real en `web-app` — el conmutador y el editor ya no usan datos de ejemplo. Estado vacío ("crea tu primer espacio") cuando un usuario aún no tiene ninguno. De paso se corrigió un bug: el repositorio de workspaces guardaba el slug como `displayName`.
 - `packages/contracts`: esquemas Zod compartidos (bloques, tema, auth) entre las tres piezas — un solo punto de verdad para estas formas de datos.
 
 ## Pendiente para cerrar Fase 0 / avanzar Fase A (próximos incrementos)
@@ -37,7 +38,6 @@ Además, en este incremento:
 - 2FA (TOTP) — completar `VerifyTwoFactorUseCase` (el login ya detecta `requiresTwoFactor`).
 - Invitación de miembros que aún no tienen cuenta (tabla `workspace_invitations` + email).
 - `RefreshTokenUseCase` con rotación y detección de reuse.
-- `GET /workspaces` real en `web-app` — hoy el conmutador de workspace y el editor usan un workspace de ejemplo fijo (`useActiveWorkspaceStore`).
 - Editor de propiedades específico para los tipos de bloque restantes (video, embed, galería, FAQ, countdown, formulario, producto, HTML, markdown) — el dominio ya los admite (`BLOCK_TYPES`), solo falta su UI.
 - Panel de historial de versiones en `web-app` (la API ya expone `GET/POST .../versions`).
 - Sistema de temas (Fase A, siguiente pieza natural tras el editor).

@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 
 interface ActiveWorkspaceState {
-  workspaceId: string;
+  workspaceId: string | null;
   setWorkspaceId: (id: string) => void;
 }
 
-// TODO(Fase A, siguiente incremento): inicializar desde GET /workspaces real
-// y persistir la elección (ej. en la URL o en un cookie de preferencia) en
-// vez de este valor fijo — documentado también en README.
+/**
+ * Sin valor por defecto: se puebla desde GET /workspaces en cuanto la
+ * query resuelve (ver DashboardLayout). `null` significa "todavía no
+ * sabemos qué workspaces tiene el usuario" — no "no tiene ninguno".
+ */
 export const useActiveWorkspaceStore = create<ActiveWorkspaceState>((set) => ({
-  workspaceId: 'w1',
+  workspaceId: null,
   setWorkspaceId: (workspaceId) => set({ workspaceId }),
 }));

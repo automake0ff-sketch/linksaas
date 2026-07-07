@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateWorkspaceUseCase } from '../application/create-workspace.usecase';
 import { InviteMemberUseCase } from '../application/invite-member.usecase';
+import { ListMyWorkspacesUseCase } from '../application/list-my-workspaces.usecase';
 import { CreateWorkspaceDto, InviteMemberDto } from './tenancy.dto';
 import { WorkspaceAccessGuard, RequirePermission } from '../../../shared/guards/workspace-access.guard';
 import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
@@ -12,7 +13,13 @@ export class TenancyController {
   constructor(
     private readonly createWorkspace: CreateWorkspaceUseCase,
     private readonly inviteMember: InviteMemberUseCase,
+    private readonly listMyWorkspaces: ListMyWorkspacesUseCase,
   ) {}
+
+  @Get()
+  async listMine(@CurrentUser() userId: string) {
+    return this.listMyWorkspaces.execute(userId);
+  }
 
   @Post()
   async create(@Body() dto: CreateWorkspaceDto, @CurrentUser() userId: string) {

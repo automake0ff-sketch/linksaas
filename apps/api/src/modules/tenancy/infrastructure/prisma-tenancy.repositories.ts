@@ -35,9 +35,9 @@ export class PrismaWorkspaceRepository implements WorkspaceRepositoryPort {
         id: workspace.id,
         organizationId: workspace.organizationId,
         slug: workspace.slug,
-        displayName: workspace.slug,
+        displayName: workspace.displayName,
       },
-      update: { slug: workspace.slug },
+      update: { slug: workspace.slug, displayName: workspace.displayName },
     });
   }
 }

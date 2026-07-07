@@ -57,6 +57,10 @@ export class Workspace extends AggregateRoot<WorkspaceProps> {
     return this.props.slug;
   }
 
+  get displayName(): string {
+    return this.props.displayName;
+  }
+
   get organizationId(): string {
     return this.props.organizationId;
   }

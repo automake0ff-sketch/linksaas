@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CreateWorkspaceUseCase } from './application/create-workspace.usecase';
 import { InviteMemberUseCase } from './application/invite-member.usecase';
+import { ListMyWorkspacesUseCase } from './application/list-my-workspaces.usecase';
 import { CreateDefaultWorkspaceOnRegister } from './application/create-default-workspace.listener';
 import { TenancyController } from './interface/tenancy.controller';
 import {
@@ -23,6 +24,7 @@ import { IamModule } from '../iam/iam.module';
   providers: [
     CreateWorkspaceUseCase,
     InviteMemberUseCase,
+    ListMyWorkspacesUseCase,
     CreateDefaultWorkspaceOnRegister,
     { provide: WORKSPACE_REPOSITORY, useClass: PrismaWorkspaceRepository },
     { provide: ORGANIZATION_REPOSITORY, useClass: PrismaOrganizationRepository },
