@@ -31,10 +31,12 @@ export class PrismaPageRepository implements PageRepositoryPort {
         workspaceId: page.workspaceId,
         slug: '',
         draftBlocks: page.draftBlocks as unknown as object,
+        themeId: page.themeId ?? undefined,
       },
       update: {
         draftBlocks: page.draftBlocks as unknown as object,
         publishedVersionId: page.publishedVersionId ?? undefined,
+        themeId: page.themeId ?? undefined,
       },
     });
   }

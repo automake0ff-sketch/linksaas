@@ -61,6 +61,19 @@ export class Page extends AggregateRoot<PageProps> {
     return this.props.workspaceId;
   }
 
+  get themeId(): string | null {
+    return this.props.themeId;
+  }
+
+  assignTheme(themeId: string): void {
+    this.props.themeId = themeId;
+    this.addDomainEvent({
+      name: 'page.theme_assigned',
+      occurredAt: new Date(),
+      payload: { pageId: this.id, workspaceId: this.props.workspaceId, themeId },
+    });
+  }
+
   get publishedVersionId(): string | null {
     return this.props.publishedVersionId;
   }

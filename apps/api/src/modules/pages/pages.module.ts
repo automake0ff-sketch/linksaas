@@ -38,5 +38,6 @@ import {
     { provide: PAGE_REPOSITORY, useClass: PrismaPageRepository },
     { provide: PAGE_VERSION_REPOSITORY, useClass: PrismaPageVersionRepository },
   ],
+  exports: [PAGE_REPOSITORY],
 })
 export class PagesModule {}

@@ -67,6 +67,11 @@ export class GetDraftPageUseCase {
 
   async execute(workspaceId: string) {
     const page = await loadPageOrThrow(this.pages, workspaceId);
-    return { pageId: page.id, blocks: page.draftBlocks, isPublished: page.isPublished };
+    return {
+      pageId: page.id,
+      blocks: page.draftBlocks,
+      isPublished: page.isPublished,
+      themeId: page.themeId,
+    };
   }
 }

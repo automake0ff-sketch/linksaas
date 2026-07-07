@@ -8,7 +8,7 @@ function authedFetch<T>(path: string, init: RequestInit = {}) {
 
 export const pagesApi = {
   getDraft: (workspaceId: string) =>
-    authedFetch<{ pageId: string; blocks: Block[]; isPublished: boolean }>(
+    authedFetch<{ pageId: string; blocks: Block[]; isPublished: boolean; themeId: string | null }>(
       `/workspaces/${workspaceId}/page`,
     ),
 

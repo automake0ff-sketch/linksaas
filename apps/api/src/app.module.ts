@@ -7,6 +7,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { IamModule } from './modules/iam/iam.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { PagesModule } from './modules/pages/pages.module';
+import { ThemesModule } from './modules/themes/themes.module';
 import { PublicPagesModule } from './modules/public-pages/public-pages.module';
 import { SharedInfraModule } from './shared/infrastructure/shared-infra.module';
 import { TenantMiddleware } from './shared/middleware/tenant.middleware';
@@ -28,6 +29,7 @@ import { envSchema } from './config/env.schema';
     IamModule,
     TenancyModule,
     PagesModule,
+    ThemesModule,
     PublicPagesModule,
     // PagesModule, ThemesModule, AnalyticsModule... se añaden en los
     // siguientes incrementos (Fase A).

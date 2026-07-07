@@ -29,6 +29,7 @@ Además, en este incremento:
 - **Módulo `pages` (API)**: agregado `Page` con las reglas del editor (añadir/actualizar/eliminar/duplicar/reordenar bloques, límite de 100 bloques, publicar con snapshot inmutable en `PageVersion`, restaurar versión). Listener `CreateRootPageOnWorkspaceCreated` simétrico al de `tenancy` — cada workspace nuevo nace con una página raíz vacía, sin acoplar `pages` a `tenancy`.
 - **Editor visual drag&drop (`web-app`)**: biblioteca de bloques, lista reordenable con `@dnd-kit`, panel de propiedades por tipo de bloque, marco de dispositivo (móvil/tablet/desktop) como elemento de firma visual, deshacer/rehacer con historial en memoria (`zustand`), autosave con debounce (800ms) contra `PUT /workspaces/:id/page/draft`, y publicación explícita separada del borrador.
 - **Workspaces reales**: `GET /workspaces` (lista los del usuario autenticado) y creación desde un diálogo real en `web-app` — el conmutador y el editor ya no usan datos de ejemplo. Estado vacío ("crea tu primer espacio") cuando un usuario aún no tiene ninguno. De paso se corrigió un bug: el repositorio de workspaces guardaba el slug como `displayName`.
+- **Sistema de temas**: entidad `Theme` con validación real (colores hexadecimales, allowlist de fuentes, límite de tamaño de CSS personalizado) en vez de "guardar lo que llegue". 4 presets de sistema sembrados (`Claro`, `Oscuro`, `Editorial`, `Terminal`). Página `/dashboard/themes` en `web-app`: elegir preset, crear/editar tema personalizado con color pickers y preview en vivo, asignar a la página. `AssignThemeToPageUseCase` vive en `themes` pero depende del puerto `PAGE_REPOSITORY` exportado por `pages` — mismo patrón de comunicación entre módulos ya usado en `tenancy`→`pages`.
 - `packages/contracts`: esquemas Zod compartidos (bloques, tema, auth) entre las tres piezas — un solo punto de verdad para estas formas de datos.
 
 ## Pendiente para cerrar Fase 0 / avanzar Fase A (próximos incrementos)
@@ -39,6 +40,8 @@ Además, en este incremento:
 - Invitación de miembros que aún no tienen cuenta (tabla `workspace_invitations` + email).
 - `RefreshTokenUseCase` con rotación y detección de reuse.
 - Editor de propiedades específico para los tipos de bloque restantes (video, embed, galería, FAQ, countdown, formulario, producto, HTML, markdown) — el dominio ya los admite (`BLOCK_TYPES`), solo falta su UI.
+- El lienzo del editor (`DeviceFrame`/`EditorBlockPreview`) todavía usa los colores fijos del panel, no el tema real asignado a la página — solo `web-public` refleja el tema hoy. Aplicar los tokens del tema activo también en la preview del editor es el siguiente paso natural.
+- CSS personalizado por tema: el dominio ya lo valida (`Theme.updateCustomCss`) pero no hay campo en `ThemeEditor` todavía ni se inyecta en `web-public`.
 - Panel de historial de versiones en `web-app` (la API ya expone `GET/POST .../versions`).
 - Sistema de temas (Fase A, siguiente pieza natural tras el editor).
 - `avatarUrl`/`bio` en el modelo `Page` (hoy el endpoint público los devuelve como `null` — falta el campo en Prisma).
