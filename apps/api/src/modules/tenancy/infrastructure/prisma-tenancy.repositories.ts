@@ -80,10 +80,11 @@ export class PrismaMemberRepository implements MemberRepositoryPort {
   }
 
   async listByWorkspace(workspaceId: string) {
-    const rows = await this.prisma.member.findMany({
-      where: { workspaceId },
-      include: { role: true },
-    });
+    const rows: { userId: string; status: string; role: { name: string } }[] =
+      await this.prisma.member.findMany({
+        where: { workspaceId },
+        include: { role: true },
+      });
     return rows.map((r) => ({ userId: r.userId, roleName: r.role.name, status: r.status }));
   }
 }

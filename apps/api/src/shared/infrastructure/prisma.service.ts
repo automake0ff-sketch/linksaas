@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -16,15 +16,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * para que las políticas RLS lo apliquen. SIEMPRE se usa este wrapper para
    * queries de datos de tenant — nunca se llama a this.prisma.<model> directo
    * fuera de un contexto de workspace ya resuelto por el middleware de tenancy.
+   *
+   * IMPORTANTE: `fn` recibe el cliente de la transacción (`tx`) y DEBE usarlo
+   * para sus queries (`tx.page.findMany(...)`, no `this.page.findMany(...)`)
+   * — de lo contrario esas queries corren en una conexión distinta a la que
+   * tiene el `SET LOCAL` aplicado y RLS no las filtra.
    */
-  async withWorkspace<T>(workspaceId: string, fn: () => Promise<T>): Promise<T> {
+  async withWorkspace<T>(
+    workspaceId: string,
+    fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
     return this.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(
-        `SET LOCAL app.current_workspace_id = '${workspaceId}'`,
-      );
-      // fn() debe usar `tx` en una implementación completa; aquí se expone
-      // el patrón — cada repositorio de módulo con datos de tenant lo sigue.
-      return fn();
+      await tx.$executeRawUnsafe(`SET LOCAL app.current_workspace_id = '${workspaceId}'`);
+      return fn(tx);
     });
   }
 }

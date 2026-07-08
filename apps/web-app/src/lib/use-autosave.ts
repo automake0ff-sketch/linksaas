@@ -13,7 +13,7 @@ const AUTOSAVE_DEBOUNCE_MS = 800;
 export function useAutosave(workspaceId: string) {
   const blocks = useEditorStore((s) => s.blocks);
   const setSaveStatus = useEditorStore((s) => s.setSaveStatus);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isFirstRender = useRef(true);
 
   useEffect(() => {

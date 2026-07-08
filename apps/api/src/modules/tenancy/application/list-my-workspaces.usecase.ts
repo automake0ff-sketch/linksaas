@@ -8,6 +8,11 @@ export interface MyWorkspaceSummary {
   role: string;
 }
 
+interface MembershipWithRelations {
+  workspace: { id: string; slug: string; displayName: string; deletedAt: Date | null };
+  role: { name: string };
+}
+
 /**
  * Query de solo lectura simple (listar workspaces de un usuario) — no
  * justifica un agregado de dominio propio, así que usa PrismaService
@@ -20,7 +25,7 @@ export class ListMyWorkspacesUseCase {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async execute(userId: string): Promise<MyWorkspaceSummary[]> {
-    const memberships = await this.prisma.member.findMany({
+    const memberships: MembershipWithRelations[] = await this.prisma.member.findMany({
       where: { userId, status: 'active' },
       include: { workspace: true, role: true },
       orderBy: { createdAt: 'asc' },

@@ -48,7 +48,16 @@ Además, en este incremento:
 - Extraer `EditorBlockPreview`/`BlockRenderer` a `packages/block-renderer` compartido (hoy son dos copias con la misma forma, documentado en ambos archivos).
 - Migración inicial de Prisma aplicada + políticas RLS generadas por script (una por tabla con `workspace_id`).
 
-## Cómo correr en local
+## Desplegar en Vercel
+
+Este es un monorepo con dos apps Next.js independientes (`web-app` y `web-public`) más una API NestJS que **no se despliega en Vercel** (necesita un host de contenedores — Cloud Run/Fly.io/ECS, ver `docs/10-DevOps.md`). En Vercel se crean **dos proyectos separados**, uno por app:
+
+1. Importa el repo dos veces (o "Add New Project" dos veces sobre el mismo repo).
+2. En cada proyecto, en **Settings → General → Root Directory**, pon `apps/web-app` en uno y `apps/web-public` en el otro.
+3. En **Settings → Environment Variables** de cada proyecto, añade `NEXT_PUBLIC_API_URL` apuntando a donde tengas desplegada la API (mientras no exista un despliegue real, el build compila igual — esta variable solo se usa en tiempo de ejecución, no durante `next build`).
+4. Redeploy.
+
+Si Vercel se creó apuntando a la raíz del repo sin fijar el Root Directory, verá los `package.json` de ambas apps y probablemente falle o construya la equivocada.
 
 ```bash
 cp .env.example .env                        # raíz: variables de la API

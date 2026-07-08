@@ -1,5 +1,6 @@
 'use client';
 
+import type { ThemeTokens } from '@linkforge/contracts';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
@@ -9,7 +10,7 @@ import { pagesApi } from '@/lib/pages-api';
 import { ThemeCard } from '@/components/themes/theme-card';
 import { ThemeEditor } from '@/components/themes/theme-editor';
 
-const BLANK_TOKENS = {
+const BLANK_TOKENS: ThemeTokens = {
   surface: '#FFFFFF',
   surfaceSecondary: '#F4F5F8',
   textPrimary: '#12151C',
@@ -18,7 +19,7 @@ const BLANK_TOKENS = {
   accent: '#3454D1',
   fontDisplay: 'Space Grotesk',
   fontBody: 'Inter',
-  radius: 'md' as const,
+  radius: 'md',
 };
 
 export default function ThemesPage() {

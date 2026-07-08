@@ -5,19 +5,20 @@ import { BlockRenderer } from '@/components/block-renderer';
 import { PageAnalyticsBeacon } from '@/components/page-analytics-beacon';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 // generateStaticParams se completa cuando exista un endpoint de "slugs
 // publicados" — de momento cada página se genera on-demand (ISR) en la
 // primera visita y queda cacheada (ver next.config.js).
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await getPublicPage(params.slug);
+  const { slug } = await params;
+  const page = await getPublicPage(slug);
   if (!page) return { title: 'Página no encontrada' };
 
-  const title = page.title ?? `${params.slug} · LinkForge`;
+  const title = page.title ?? `${slug} · LinkForge`;
   const description = page.bio ?? 'Descubre todos mis enlaces en un solo lugar.';
-  const url = `https://${params.slug}.linkforge.com`;
+  const url = `https://${slug}.linkforge.com`;
 
   return {
     title,
@@ -41,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PublicPage({ params }: Props) {
-  const page = await getPublicPage(params.slug);
+  const { slug } = await params;
+  const page = await getPublicPage(slug);
   if (!page) notFound();
 
   const sortedBlocks = [...page.blocks].sort((a, b) => a.order - b.order);
@@ -49,11 +51,11 @@ export default async function PublicPage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
-    name: page.title ?? params.slug,
+    name: page.title ?? slug,
     description: page.bio ?? undefined,
     mainEntity: {
       '@type': 'Person',
-      name: page.title ?? params.slug,
+      name: page.title ?? slug,
       image: page.avatarUrl ?? undefined,
     },
   };
@@ -80,7 +82,7 @@ export default async function PublicPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <PageAnalyticsBeacon workspaceSlug={params.slug} />
+      <PageAnalyticsBeacon workspaceSlug={slug} />
 
       <div className="flex w-full max-w-md flex-col items-center gap-4">
         {page.avatarUrl && (
