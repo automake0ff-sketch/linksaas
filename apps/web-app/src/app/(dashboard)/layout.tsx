@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutGrid, Palette, BarChart3, Settings, LogOut } from 'lucide-react';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { CreateWorkspaceDialog } from '@/components/create-workspace-dialog';
 import { useActiveWorkspaceStore } from '@/store/active-workspace-store';
+import { useBootstrapSession } from '@/lib/use-bootstrap-session';
 import { workspacesApi } from '@/lib/workspaces-api';
 import { Button } from '@/components/form-fields';
 
@@ -17,13 +19,21 @@ const NAV = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const activeWorkspaceId = useActiveWorkspaceStore((s) => s.workspaceId);
   const setActiveWorkspace = useActiveWorkspaceStore((s) => s.setWorkspaceId);
 
+  const sessionStatus = useBootstrapSession();
+
+  useEffect(() => {
+    if (sessionStatus === 'anonymous') router.replace('/login');
+  }, [sessionStatus, router]);
+
   const { data: workspaces, isLoading } = useQuery({
     queryKey: ['my-workspaces'],
     queryFn: workspacesApi.listMine,
+    enabled: sessionStatus === 'authenticated', // no pedir workspaces sin token válido en memoria
   });
 
   // Al llegar la lista real, si todavía no hay workspace activo seleccionado
@@ -34,12 +44,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [workspaces, activeWorkspaceId, setActiveWorkspace]);
 
-  if (isLoading) {
+  if (sessionStatus === 'checking' || (sessionStatus === 'authenticated' && isLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface-2">
         <p className="text-sm text-text-secondary">Cargando tus espacios…</p>
       </div>
     );
+  }
+
+  if (sessionStatus === 'anonymous') {
+    return null; // el redirect del efecto de arriba ya está en marcha
   }
 
   if (!workspaces || workspaces.length === 0) {

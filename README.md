@@ -4,6 +4,12 @@ Plataforma de bio-links, comercio y automatización. Ver `docs/` para el PRD,
 arquitectura, base de datos, roadmap, backlog, APIs, seguridad, testing y
 DevOps completos.
 
+> **⚠️ Antes de desplegar a producción, lee `docs/11-Auditoria-Produccion.md`.**
+> Resume qué se verificó de verdad (no solo se documentó) y qué sigue
+> pendiente — incluye hallazgos críticos ya corregidos (migraciones de BD
+> inexistentes, refresh token no funcional, pipeline de CI roto) y el estado
+> real de RLS (políticas escritas pero deliberadamente no activadas todavía).
+
 ## Estado actual: Fase 0 (Fundación) — en progreso
 
 Implementado en este incremento:

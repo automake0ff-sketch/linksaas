@@ -12,6 +12,7 @@ import { PublicPagesModule } from './modules/public-pages/public-pages.module';
 import { SharedInfraModule } from './shared/infrastructure/shared-infra.module';
 import { TenantMiddleware } from './shared/middleware/tenant.middleware';
 import { PublicAuthGuard } from './shared/auth/public-route.guard';
+import { HealthController } from './shared/health/health.controller';
 import { envSchema } from './config/env.schema';
 
 @Module({
@@ -31,9 +32,8 @@ import { envSchema } from './config/env.schema';
     PagesModule,
     ThemesModule,
     PublicPagesModule,
-    // PagesModule, ThemesModule, AnalyticsModule... se añaden en los
-    // siguientes incrementos (Fase A).
   ],
+  controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: PublicAuthGuard }],
 })
 export class AppModule implements NestModule {

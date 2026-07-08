@@ -7,3 +7,5 @@ build/
 .DS_Store
 coverage/
 .turbo/
+*.tsbuildinfo
+next-env.d.ts

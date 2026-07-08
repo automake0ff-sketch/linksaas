@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { RegisterUserUseCase } from './application/register-user.usecase';
 import { LoginUserUseCase } from './application/login-user.usecase';
+import { RefreshTokenUseCase } from './application/refresh-token.usecase';
 import { AuthController } from './interface/auth.controller';
 import { USER_REPOSITORY } from './domain/user.repository.port';
 import { PrismaUserRepository } from './infrastructure/prisma-user.repository';
@@ -28,6 +29,7 @@ import { SharedInfraModule } from '../../shared/infrastructure/shared-infra.modu
   providers: [
     RegisterUserUseCase,
     LoginUserUseCase,
+    RefreshTokenUseCase,
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
     { provide: AUTH_METHOD_REPOSITORY, useClass: PrismaAuthMethodRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },

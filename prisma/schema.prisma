@@ -55,6 +55,7 @@ model AuthMethod {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
   @@map("auth_methods")
 }
 
@@ -78,6 +79,7 @@ model Organization {
   workspaces Workspace[]
   subscriptions Subscription[]
 
+  @@index([ownerId])
   @@map("organizations")
 }
 
@@ -97,6 +99,7 @@ model Workspace {
   themes       Theme[]
   auditLogs    AuditLog[]
 
+  @@index([organizationId])
   @@map("workspaces")
 }
 
@@ -110,6 +113,7 @@ model Domain {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
+  @@index([workspaceId])
   @@map("domains")
 }
 
@@ -122,6 +126,7 @@ model Role {
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   members   Member[]
 
+  @@index([workspaceId])
   @@map("roles")
 }
 
@@ -139,6 +144,7 @@ model Member {
   role      Role      @relation(fields: [roleId], references: [id])
 
   @@unique([workspaceId, userId])
+  @@index([userId])
   @@map("members")
 }
 
@@ -155,6 +161,7 @@ model Theme {
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   pages     Page[]
 
+  @@index([workspaceId])
   @@map("themes")
 }
 
@@ -174,6 +181,7 @@ model Page {
   versions  PageVersion[]
 
   @@unique([workspaceId, slug])
+  @@index([themeId])
   @@map("pages")
 }
 
@@ -186,6 +194,7 @@ model PageVersion {
 
   page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
 
+  @@index([pageId])
   @@map("page_versions")
 }
 
@@ -203,6 +212,7 @@ model Subscription {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  @@index([organizationId])
   @@map("subscriptions")
 }
 
@@ -220,5 +230,7 @@ model AuditLog {
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actor     User?      @relation(fields: [actorId], references: [id])
 
+  @@index([workspaceId])
+  @@index([actorId])
   @@map("audit_logs")
 }

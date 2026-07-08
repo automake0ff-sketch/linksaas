@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { CreateWorkspaceUseCase } from './create-workspace.usecase';
 import { DomainEvent } from '../../../shared/kernel/entity';
@@ -34,6 +34,14 @@ export class CreateDefaultWorkspaceOnRegister {
         displayName: suggestedSlug,
       });
     } catch (error) {
+      if (!(error instanceof ConflictException)) {
+        // Cualquier otro fallo (BD caída, error de validación distinto,
+        // etc.) NO debe tratarse como "el slug ya existe" ni reintentarse
+        // a ciegas — se relanza para que quede visible (logs/Sentry) en
+        // vez de perderse silenciosamente.
+        throw error;
+      }
+
       // Si el slug sugerido ya existe (email común), se añade un sufijo
       // aleatorio corto en vez de fallar todo el registro — el usuario
       // puede cambiar el slug después desde el panel.

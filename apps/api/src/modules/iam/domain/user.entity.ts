@@ -17,11 +17,12 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   static create(id: string, params: { email: string; name?: string }): User {
-    if (!EMAIL_REGEX.test(params.email)) {
+    const normalizedEmail = params.email.toLowerCase().trim();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
       throw new DomainError('Email inválido', 'INVALID_EMAIL');
     }
     const user = new User(id, {
-      email: params.email.toLowerCase().trim(),
+      email: normalizedEmail,
       name: params.name,
       twoFactorEnabled: false,
       createdAt: new Date(),

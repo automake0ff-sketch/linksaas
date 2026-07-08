@@ -1,9 +1,10 @@
-import { Body, Controller, HttpCode, Post, Res, Req } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Res, Req, UnauthorizedException } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags } from '@nestjs/swagger';
 import { RegisterUserUseCase } from '../application/register-user.usecase';
 import { LoginUserUseCase } from '../application/login-user.usecase';
+import { RefreshTokenUseCase } from '../application/refresh-token.usecase';
 import { LoginDto, RegisterDto } from './auth.dto';
 import { Public } from '../../../shared/decorators/public.decorator';
 
@@ -16,6 +17,7 @@ export class AuthController {
   constructor(
     private readonly registerUser: RegisterUserUseCase,
     private readonly loginUser: LoginUserUseCase,
+    private readonly refreshTokenUseCase: RefreshTokenUseCase,
   ) {}
 
   @Post('register')
@@ -50,12 +52,14 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(200)
-  async refresh(@Req() req: Request) {
-    // La rotación de refresh token y la detección de reuse se implementan
-    // en RefreshTokenUseCase (siguiente incremento de este módulo) —
-    // aquí queda el punto de entrada ya cableado.
-    const token = (req.cookies?.[REFRESH_COOKIE] as string) ?? '';
-    return { received: !!token };
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const token = req.cookies?.[REFRESH_COOKIE] as string | undefined;
+    if (!token) throw new UnauthorizedException('Sesión no encontrada');
+
+    const result = await this.refreshTokenUseCase.execute(token);
+    this.setRefreshCookie(res, result.refreshToken);
+    return { accessToken: result.accessToken };
   }
 
   private setRefreshCookie(res: Response, token: string) {
