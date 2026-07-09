@@ -54,6 +54,17 @@ Además, en este incremento:
 - Extraer `EditorBlockPreview`/`BlockRenderer` a `packages/block-renderer` compartido (hoy son dos copias con la misma forma, documentado en ambos archivos).
 - Migración inicial de Prisma aplicada + políticas RLS generadas por script (una por tabla con `workspace_id`).
 
+## Desplegar la API en Render
+
+Hay un `render.yaml` en la raíz (Render lo detecta automáticamente como Blueprint). Aprovisiona una base de datos Postgres gratuita y despliega la API por Docker, aplicando migraciones y sembrando datos base automáticamente en cada arranque (`apps/api/docker-entrypoint.sh`).
+
+1. Entra en [render.com](https://render.com) y conéctate con tu cuenta de GitHub.
+2. **New → Blueprint**, selecciona el repo `linksaas`.
+3. Render lee `render.yaml` y muestra lo que va a crear (una base de datos + un servicio web). Aprueba.
+4. `JWT_SECRET` se genera solo (`generateValue: true`). No hace falta tocar nada más para que arranque.
+5. Cuando el deploy termine, la API queda en algo como `https://linkforge-api.onrender.com`. Prueba `https://linkforge-api.onrender.com/v1/health` — debe devolver `{"status":"ok"}`.
+6. Actualiza `CORS_ORIGINS` en las variables de entorno del servicio con las URLs reales de tus proyectos de Vercel (`web-app` y `web-public`) en cuanto las tengas, y en cada uno de esos proyectos de Vercel pon `NEXT_PUBLIC_API_URL` apuntando a esta URL de Render + `/v1`.
+
 ## Desplegar en Vercel
 
 Este es un monorepo con dos apps Next.js independientes (`web-app` y `web-public`) más una API NestJS que **no se despliega en Vercel** (necesita un host de contenedores — Cloud Run/Fly.io/ECS, ver `docs/10-DevOps.md`). En Vercel se crean **dos proyectos separados**, uno por app:

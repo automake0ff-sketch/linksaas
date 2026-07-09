@@ -1,0 +1,29 @@
+databases:
+  - name: linkforge-db
+    plan: free
+    databaseName: linkforge
+    user: linkforge
+
+services:
+  - type: web
+    name: linkforge-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: linkforge-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PLATFORM_DOMAIN
+        value: linkforge.com
+      - key: CORS_ORIGINS
+        value: http://localhost:3000,http://localhost:3002
