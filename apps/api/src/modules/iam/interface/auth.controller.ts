@@ -27,7 +27,10 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async register(@Body() dto: RegisterDto) {
     const { userId } = await this.registerUser.execute(dto);
-    return { userId, message: 'Revisa tu email para verificar la cuenta' };
+    // Nota: hasta que exista envío real de email (Resend/SES), la cuenta se
+    // marca como verificada en el registro para no prometer un correo que
+    // nunca llega. Ver User.create() en el dominio.
+    return { userId, message: 'Cuenta creada correctamente' };
   }
 
   @Post('login')

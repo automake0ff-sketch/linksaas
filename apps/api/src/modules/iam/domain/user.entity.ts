@@ -24,6 +24,10 @@ export class User extends AggregateRoot<UserProps> {
     const user = new User(id, {
       email: normalizedEmail,
       name: params.name,
+      // TODO: volver a exigir verificación por email en cuanto exista el
+      // envío real (Resend/SES). Hasta entonces, verificar en el registro
+      // evita prometer un correo que nunca llega.
+      emailVerifiedAt: new Date(),
       twoFactorEnabled: false,
       createdAt: new Date(),
     });

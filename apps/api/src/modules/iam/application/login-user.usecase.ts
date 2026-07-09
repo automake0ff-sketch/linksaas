@@ -44,15 +44,13 @@ export class LoginUserUseCase {
     const valid = await this.hasher.verify(input.password, method.passwordHash);
     if (!valid) throw invalidCredentials();
 
-    if (user.twoFactorEnabled) {
-      // El flujo de 2FA emite un token temporal de "pending 2FA" en vez de
-      // las credenciales finales — se completa en VerifyTwoFactorUseCase.
-      return {
-        accessToken: '',
-        refreshToken: '',
-        requiresTwoFactor: true,
-      };
-    }
+    // IMPORTANTE: no existe todavía VerifyTwoFactorUseCase ni endpoint de
+    // verificación, ni forma de activar 2FA desde la UI. Bloquear aquí a un
+    // usuario con twoFactorEnabled=true lo dejaría sin poder entrar nunca
+    // (callejón sin salida). Hasta que el flujo completo esté implementado,
+    // se ignora el flag y se emiten credenciales normales.
+    // TODO: reactivar este bloqueo en cuanto exista /auth/2fa/verify.
+    void user.twoFactorEnabled;
 
     return {
       accessToken: this.tokens.signAccessToken({ sub: user.id, email: user.email }),

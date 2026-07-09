@@ -19,17 +19,16 @@ describe('User (dominio)', () => {
     expect(events[0].name).toBe('user.registered');
   });
 
-  it('no está verificado por defecto', () => {
+  it('se marca como verificado automáticamente al registrarse (no hay envío de email todavía)', () => {
     const user = User.create('id-1', { email: 'a@b.com' });
-    expect(user.isEmailVerified).toBe(false);
+    expect(user.isEmailVerified).toBe(true);
   });
 
-  it('marcar como verificado es idempotente (no duplica el evento)', () => {
+  it('marcar como verificado un usuario ya verificado es idempotente (no emite evento)', () => {
     const user = User.create('id-1', { email: 'a@b.com' });
     user.pullDomainEvents(); // limpiar el evento de creación
     user.markEmailVerified();
-    user.markEmailVerified();
     const events = user.pullDomainEvents();
-    expect(events).toHaveLength(1);
+    expect(events).toHaveLength(0);
   });
 });
