@@ -50,9 +50,10 @@ Ninguno de los tres proyectos (`api`, `web-app`, `web-public`) tenía ESLint ins
 
 ## Huecos importantes (no bloquean un despliegue de prueba, sí uno real)
 
-- **No hay envío de email real.** El registro dice "revisa tu email para verificar tu cuenta" pero no hay integración con Resend/SendGrid/etc. Nadie recibe ningún email. La verificación de email (`User.markEmailVerified`) existe en el dominio pero no hay ningún caso de uso ni endpoint que la dispare con un token real.
+- **No hay envío de email real.** El registro ya no promete verificación por email que nunca llega (se corrigió: la cuenta se marca verificada automáticamente al registrarse, con un TODO explícito en `User.create()` para revertir esto en cuanto exista envío real vía Resend/SES). Pero el envío real en sí — y por tanto "recuperar contraseña" — sigue sin existir.
 - **"Recuperar contraseña" no existe.** Estaba en la lista de must-haves original y nunca se implementó.
-- **OAuth, passkeys y 2FA no están implementados** (esto sí está documentado honestamente en el README como pendiente, no es un hallazgo nuevo).
+- **OAuth y passkeys no están implementados** (documentado honestamente en el README como pendiente).
+- **2FA:** el login ya no se bloquea para un usuario con `twoFactorEnabled=true` (se corrigió el callejón sin salida — antes no había forma de completar el login si ese flag estaba activo, porque `VerifyTwoFactorUseCase` no existe). Sigue sin existir un flujo real para activar/verificar 2FA; el flag simplemente se ignora por ahora, con un TODO explícito para reactivar el bloqueo cuando exista `/auth/2fa/verify`.
 - **Invitar a un miembro que aún no tiene cuenta falla** — `InviteMemberUseCase` lanza `NotFoundException` en ese caso en vez de crear una invitación pendiente. Documentado, no arreglado.
 - **El throttling (`@nestjs/throttler`) usa almacenamiento en memoria por defecto.** Con una sola instancia del API esto funciona; en cuanto haya más de una réplica (necesario para cualquier despliegue serio), cada instancia lleva su propio contador y el rate limit efectivo se multiplica por el número de réplicas. Necesita el storage de Redis (`@nest-lab/throttler-storage-redis` o similar) — Redis ya está provisionado en `docker-compose.yml` pero no conectado a esto.
 - **Sentry está mencionado en `docs/10-DevOps.md` y en `.env.example` (`SENTRY_DSN`) pero el SDK no está instalado ni inicializado en ningún sitio.** Hoy, un error 500 en producción no se reporta a ningún sitio salvo los logs de stdout.
@@ -82,4 +83,12 @@ Ninguno de los tres proyectos (`api`, `web-app`, `web-public`) tenía ESLint ins
 5. Antes de considerar RLS "activo": hacer el refactor de repositorios descrito en `docs/rls-policies-reference.sql` y solo entonces aplicar esas políticas.
 6. OAuth/passkeys/2FA cuando toque, según el roadmap ya acordado.
 
-Ninguno de estos pasos es una sorpresa del roadmap — lo que cambia tras esta auditoría es que ahora sabes con certeza (probado, no asumido) cuáles de las piezas "ya hechas" tenían agujeros reales, y esos ya están cerrados.
+## Addenda: lo que reveló el primer despliegue real (Render)
+
+Tras escribir este informe, se desplegó la API de verdad en Render. Esto confirmó el hallazgo #7 (no se pudo levantar el servidor en el entorno de esta auditoría) y sacó a la luz un problema que **ningún chequeo estático podía haber encontrado**:
+
+**Alpine (la base de la imagen Docker) no trae OpenSSL instalado por defecto.** Sin él, Prisma no puede detectar la versión de `libssl`, asume una por defecto incorrecta, e intenta descargar/escribir un motor distinto en tiempo de ejecución — y eso falla porque el contenedor corre como usuario no-root sobre un `node_modules` propiedad de `root`. Corregido: `apk add openssl` en las fases que lo necesitan, `binaryTargets` explícito en `schema.prisma` en vez de autodetección, y permisos de escritura correctos como red de seguridad.
+
+Esto refuerza la recomendación #1 de este informe: **un despliegue real prueba cosas que ningún análisis de código, por exhaustivo que sea, puede anticipar del todo.** Sigue probando en real cada pieza nueva antes de darla por buena.
+
+También durante este proceso, otra sesión de trabajo en paralelo sobre este mismo repo corrigió dos huecos reales que este informe había señalado (login bloqueado por 2FA sin flujo de verificación, y la promesa falsa de email de verificación) — ver sección de huecos importantes, ya actualizada.
