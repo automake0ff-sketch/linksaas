@@ -25,6 +25,12 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 RUN npx prisma generate --schema=prisma/schema.prisma
+# contracts se compila ANTES que la API: apps/api importa sus tipos desde
+# packages/contracts/dist/index.d.ts (ver packages/contracts/package.json,
+# "types") — si no existe todavía, el build de la API fallaría o (peor)
+# compilaría igual pero dejaría un require() en runtime que apunta a un
+# .ts sin transpilar, que es exactamente el bug que esto corrige.
+RUN npm run build --workspace=packages/contracts
 RUN npm run build --workspace=apps/api
 
 # ── runtime (imagen final de producción, mínima) ───────
@@ -36,6 +42,12 @@ COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/tsconfig.json ./tsconfig.json
+# El symlink node_modules/@linkforge/contracts apunta a ../../packages/contracts
+# — sin copiar también el paquete real (con su dist/ ya compilado), ese
+# symlink queda colgando en la imagen final y `require('@linkforge/contracts')`
+# falla en el arranque (visto en producción: "Cannot find module").
+COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
+COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 # Con el openssl correcto instalado arriba, prisma migrate deploy no
