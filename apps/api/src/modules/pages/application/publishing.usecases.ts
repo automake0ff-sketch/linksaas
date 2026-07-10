@@ -26,7 +26,12 @@ export class PublishPageUseCase {
     // agregado — el caso de uso solo orquesta: dominio decide, aquí se
     // persiste y se invalida caché.
     const snapshot = page.preparePublishSnapshot();
-    const version = await this.versions.createSnapshot(page.id, snapshot, input.publishedBy);
+    const version = await this.versions.createSnapshot(
+      input.workspaceId,
+      page.id,
+      snapshot,
+      input.publishedBy,
+    );
 
     page.markPublished(version.id);
     await this.pages.save(page);
@@ -49,7 +54,7 @@ export class ListPageVersionsUseCase {
   async execute(workspaceId: string) {
     const page = await this.pages.findRootPageByWorkspace(workspaceId);
     if (!page) throw new NotFoundException('Página no encontrada para este workspace');
-    return this.versions.listByPage(page.id);
+    return this.versions.listByPage(workspaceId, page.id);
   }
 }
 
@@ -64,7 +69,7 @@ export class RestorePageVersionUseCase {
     const page = await this.pages.findRootPageByWorkspace(input.workspaceId);
     if (!page) throw new NotFoundException('Página no encontrada para este workspace');
 
-    const version = await this.versions.findById(input.versionId);
+    const version = await this.versions.findById(input.workspaceId, input.versionId);
     if (!version) throw new NotFoundException('Versión no encontrada');
 
     // Restaurar solo toca el BORRADOR — el usuario debe volver a pulsar

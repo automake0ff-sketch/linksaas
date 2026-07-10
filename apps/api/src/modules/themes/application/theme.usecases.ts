@@ -46,7 +46,7 @@ export class UpdateCustomThemeUseCase {
   constructor(@Inject(THEME_REPOSITORY) private readonly themes: ThemeRepositoryPort) {}
 
   async execute(input: { workspaceId: string; themeId: string; tokens: ThemeTokens }): Promise<void> {
-    const theme = await this.themes.findById(input.themeId);
+    const theme = await this.themes.findById(input.themeId, input.workspaceId);
     if (!theme) throw new NotFoundException('Tema no encontrado');
 
     if (theme.isSystemTheme || theme.workspaceId !== input.workspaceId) {

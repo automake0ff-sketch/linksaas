@@ -19,6 +19,16 @@ export class PrismaAuthMethodRepository implements AuthMethodRepositoryPort {
     });
   }
 
+  async updatePasswordMethod(userId: string, passwordHash: string): Promise<void> {
+    // updateMany en vez de update porque no tenemos el id del AuthMethod
+    // aquí, solo el userId+provider (par que ya es único en la práctica:
+    // un usuario solo tiene un método "password").
+    await this.prisma.authMethod.updateMany({
+      where: { userId, provider: 'password' },
+      data: { passwordHash },
+    });
+  }
+
   async findOAuthMethod(provider: string, providerAccountId: string) {
     const row = await this.prisma.authMethod.findFirst({
       where: { provider: provider as never, providerAccountId },

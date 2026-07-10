@@ -5,7 +5,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { RegisterUserUseCase } from '../application/register-user.usecase';
 import { LoginUserUseCase } from '../application/login-user.usecase';
 import { RefreshTokenUseCase } from '../application/refresh-token.usecase';
-import { LoginDto, RegisterDto } from './auth.dto';
+import { ForgotPasswordUseCase } from '../application/forgot-password.usecase';
+import { ResetPasswordUseCase } from '../application/reset-password.usecase';
+import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './auth.dto';
 import { Public } from '../../../shared/decorators/public.decorator';
 
 const REFRESH_COOKIE = 'lf_refresh';
@@ -18,6 +20,8 @@ export class AuthController {
     private readonly registerUser: RegisterUserUseCase,
     private readonly loginUser: LoginUserUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    private readonly forgotPassword: ForgotPasswordUseCase,
+    private readonly resetPassword: ResetPasswordUseCase,
   ) {}
 
   @Post('register')
@@ -73,5 +77,23 @@ export class AuthController {
       path: '/v1/auth',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  // Mismo espíritu que el rate limit de /register: sin esto, este endpoint
+  // es una forma barata de hacer spam de emails de reset o de tantear qué
+  // direcciones existen por temporización.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async requestPasswordReset(@Body() dto: ForgotPasswordDto) {
+    return this.forgotPassword.execute(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async completePasswordReset(@Body() dto: ResetPasswordDto) {
+    await this.resetPassword.execute(dto.token, dto.newPassword);
+    return { message: 'Contraseña actualizada correctamente' };
   }
 }

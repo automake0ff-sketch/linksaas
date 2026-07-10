@@ -26,3 +26,22 @@ export interface RoleRepositoryPort {
   findSystemRoleByName(name: 'owner' | 'admin' | 'editor' | 'viewer'): Promise<{ id: string } | null>;
 }
 export const ROLE_REPOSITORY = Symbol('ROLE_REPOSITORY');
+
+export interface WorkspaceInvitationRepositoryPort {
+  create(input: {
+    workspaceId: string;
+    email: string;
+    roleId: string;
+    invitedBy: string;
+    expiresAt: Date;
+  }): Promise<{ id: string }>;
+  findPendingByEmail(email: string): Promise<
+    { id: string; workspaceId: string; roleId: string; expiresAt: Date }[]
+  >;
+  markAccepted(id: string): Promise<void>;
+  findPendingByWorkspaceAndEmail(
+    workspaceId: string,
+    email: string,
+  ): Promise<{ id: string } | null>;
+}
+export const WORKSPACE_INVITATION_REPOSITORY = Symbol('WORKSPACE_INVITATION_REPOSITORY');

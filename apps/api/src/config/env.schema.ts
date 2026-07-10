@@ -4,9 +4,11 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3001),
   DATABASE_URL: z.string().url(),
-  // Opcional en Fase 0/A: nada del código conecta a Redis todavía (el
-  // throttler usa memoria, BullMQ no está cableado). Pasa a ser obligatoria
-  // en cuanto se conecte el worker de colas (Fase A avanzada / Fase B).
+  // Sigue siendo opcional para no romper desarrollo local sin Redis
+  // levantado — sin ella, el rate limiting cae a memoria del proceso
+  // (ver app.module.ts, ThrottlerModule.forRootAsync). Con ella puesta,
+  // el rate limit es compartido entre réplicas — necesaria en cualquier
+  // despliegue con más de una instancia de la API.
   REDIS_URL: z.string().url().optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET debe tener al menos 32 caracteres'),
   PLATFORM_DOMAIN: z.string().default('linkforge.com'),

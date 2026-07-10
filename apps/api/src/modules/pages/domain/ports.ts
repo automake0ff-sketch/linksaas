@@ -8,11 +8,15 @@ export const PAGE_REPOSITORY = Symbol('PAGE_REPOSITORY');
 
 export interface PageVersionRepositoryPort {
   createSnapshot(
+    workspaceId: string,
     pageId: string,
     blocks: unknown,
     createdBy: string,
   ): Promise<{ id: string; createdAt: Date }>;
-  listByPage(pageId: string): Promise<{ id: string; createdAt: Date; createdBy: string }[]>;
-  findById(versionId: string): Promise<{ id: string; blocks: unknown } | null>;
+  listByPage(
+    workspaceId: string,
+    pageId: string,
+  ): Promise<{ id: string; createdAt: Date; createdBy: string }[]>;
+  findById(workspaceId: string, versionId: string): Promise<{ id: string; blocks: unknown } | null>;
 }
 export const PAGE_VERSION_REPOSITORY = Symbol('PAGE_VERSION_REPOSITORY');

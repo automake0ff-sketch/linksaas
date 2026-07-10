@@ -3,15 +3,19 @@ import { JwtModule } from '@nestjs/jwt';
 import { RegisterUserUseCase } from './application/register-user.usecase';
 import { LoginUserUseCase } from './application/login-user.usecase';
 import { RefreshTokenUseCase } from './application/refresh-token.usecase';
+import { ForgotPasswordUseCase } from './application/forgot-password.usecase';
+import { ResetPasswordUseCase } from './application/reset-password.usecase';
 import { AuthController } from './interface/auth.controller';
 import { USER_REPOSITORY } from './domain/user.repository.port';
 import { PrismaUserRepository } from './infrastructure/prisma-user.repository';
 import {
   AUTH_METHOD_REPOSITORY,
   PASSWORD_HASHER,
+  PASSWORD_RESET_TOKEN_REPOSITORY,
   TOKEN_SERVICE,
 } from './domain/ports';
 import { PrismaAuthMethodRepository } from './infrastructure/prisma-auth-method.repository';
+import { PrismaPasswordResetTokenRepository } from './infrastructure/prisma-password-reset-token.repository';
 import { Argon2PasswordHasher } from './infrastructure/argon2-password-hasher';
 import { JwtTokenService } from './infrastructure/jwt-token.service';
 import { SharedInfraModule } from '../../shared/infrastructure/shared-infra.module';
@@ -30,8 +34,11 @@ import { SharedInfraModule } from '../../shared/infrastructure/shared-infra.modu
     RegisterUserUseCase,
     LoginUserUseCase,
     RefreshTokenUseCase,
+    ForgotPasswordUseCase,
+    ResetPasswordUseCase,
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
     { provide: AUTH_METHOD_REPOSITORY, useClass: PrismaAuthMethodRepository },
+    { provide: PASSWORD_RESET_TOKEN_REPOSITORY, useClass: PrismaPasswordResetTokenRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
     { provide: TOKEN_SERVICE, useClass: JwtTokenService },
   ],

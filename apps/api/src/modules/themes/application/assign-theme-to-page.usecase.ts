@@ -11,7 +11,7 @@ export class AssignThemeToPageUseCase {
   ) {}
 
   async execute(input: { workspaceId: string; themeId: string }): Promise<void> {
-    const theme = await this.themes.findById(input.themeId);
+    const theme = await this.themes.findById(input.themeId, input.workspaceId);
     if (!theme) throw new NotFoundException('Tema no encontrado');
 
     // Un workspace puede usar cualquier tema de sistema, pero solo sus

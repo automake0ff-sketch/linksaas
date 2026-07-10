@@ -83,6 +83,10 @@ Ninguno de los tres proyectos (`api`, `web-app`, `web-public`) tenía ESLint ins
 5. Antes de considerar RLS "activo": hacer el refactor de repositorios descrito en `docs/rls-policies-reference.sql` y solo entonces aplicar esas políticas.
 6. OAuth/passkeys/2FA cuando toque, según el roadmap ya acordado.
 
+Ninguno de estos pasos es una sorpresa del roadmap — lo que cambia tras esta auditoría es que ahora sabes con certeza (probado, no asumido) cuáles de las piezas "ya hechas" tenían agujeros reales, y esos ya están cerrados.
+
+---
+
 ## Addenda: lo que reveló el primer despliegue real (Render)
 
 Tras escribir este informe, se desplegó la API de verdad en Render. Esto confirmó el hallazgo #7 (no se pudo levantar el servidor en el entorno de esta auditoría) y sacó a la luz un problema que **ningún chequeo estático podía haber encontrado**:
@@ -92,3 +96,19 @@ Tras escribir este informe, se desplegó la API de verdad en Render. Esto confir
 Esto refuerza la recomendación #1 de este informe: **un despliegue real prueba cosas que ningún análisis de código, por exhaustivo que sea, puede anticipar del todo.** Sigue probando en real cada pieza nueva antes de darla por buena.
 
 También durante este proceso, otra sesión de trabajo en paralelo sobre este mismo repo corrigió dos huecos reales que este informe había señalado (login bloqueado por 2FA sin flujo de verificación, y la promesa falsa de email de verificación) — ver sección de huecos importantes, ya actualizada.
+
+---
+
+## Seguimiento (sesión posterior, 09/07/2026)
+
+Se cerraron 6 de los 7 hallazgos pendientes de este documento:
+
+- ✅ Recuperar contraseña implementado (`ForgotPasswordUseCase` / `ResetPasswordUseCase`), con anti-enumeración de emails y tokens de un solo uso hasheados en BD. **Limitación real: sin proveedor de email conectado (Resend/SES), el token no llega a nadie por correo todavía** — en no-producción se devuelve en la respuesta (`devResetToken`) solo para poder probar el flujo a mano.
+- ✅ Invitar a alguien sin cuenta ya no falla — crea una invitación pendiente (tabla `workspace_invitations`, nueva) que se acepta automáticamente cuando ese email se registra.
+- ✅ Throttler movido a Redis cuando `REDIS_URL` está configurada (cae a memoria si no, igual que antes).
+- ✅ Sentry inicializado en `main.ts` si hay `SENTRY_DSN`; interceptor global reporta solo errores 5xx/no-HTTP.
+- ✅ RLS activado de verdad para `pages`, `page_versions`, `themes`, `domains`, `analytics_events` — repositorios de `pages` y `themes` refactorizados para pasar por `PrismaService.withWorkspace()`. Se arregló también una inyección SQL real en `withWorkspace` (interpolaba `workspaceId` directo en el SQL) y se añadió `FORCE ROW LEVEL SECURITY` (sin esto, si la app conecta como dueña de las tablas, las políticas no hacen nada).
+- ✅ Bug nuevo encontrado y arreglado de paso: `analytics_events` nunca se creó en la migración inicial — el endpoint de tracking llevaba rota desde el principio.
+- ⚠️ **Pendiente a propósito, documentado en `docs/rls-policies-reference.sql`:** `members` y `roles` siguen sin RLS a nivel de BD. La query "listar mis workspaces" es legítimamente cross-tenant (un usuario pertenece a varios) y necesita una segunda variable de sesión (`app.current_user_id`) que todavía no existe. Aplicar RLS estricto ahí con el diseño actual rompería esa query en vez de protegerla — se prefirió dejarlo bien documentado a hacerlo deprisa. La única defensa hoy para esas dos tablas sigue siendo el `WorkspaceAccessGuard` a nivel de aplicación.
+
+**Limitación de esta sesión, igual que la anterior:** tampoco se pudo generar el cliente de Prisma (`binaries.prisma.sh` bloqueado por red) ni aplicar la migración contra un Postgres real. El código se revisó a mano con mucho cuidado y los 29 tests de dominio + lint pasan, pero **la migración de RLS necesita probarse contra un Postgres real con dos workspaces de prueba antes de confiar en ella en producción** — están las instrucciones paso a paso al principio de `prisma/migrations/20260709090000_rls_and_missing_tables/migration.sql`.

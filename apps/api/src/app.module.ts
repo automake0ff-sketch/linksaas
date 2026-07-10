@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { IamModule } from './modules/iam/iam.module';
 import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { PagesModule } from './modules/pages/pages.module';
@@ -24,7 +25,21 @@ import { envSchema } from './config/env.schema';
       validate: (config) => envSchema.parse(config),
     }),
     EventEmitterModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]), // límite global por defecto
+    ThrottlerModule.forRootAsync({
+      useFactory: () => ({
+        throttlers: [{ ttl: 60_000, limit: 100 }], // límite global por defecto
+        // Sin esto, el rate limit vivía en memoria del proceso: con más de
+        // una instancia de la API corriendo (cualquier despliegue con
+        // autoscaling), cada réplica cuenta por separado y el límite real
+        // efectivo se multiplica por el número de instancias — un
+        // atacante podía repartir requests entre réplicas para saltárselo.
+        // REDIS_URL sigue siendo opcional (ver env.schema.ts): en local
+        // sin Redis, cae a memoria igual que antes.
+        ...(process.env.REDIS_URL
+          ? { storage: new ThrottlerStorageRedisService(process.env.REDIS_URL) }
+          : {}),
+      }),
+    }),
     JwtModule.register({ secret: process.env.JWT_SECRET }),
     SharedInfraModule,
     IamModule,

@@ -30,6 +30,7 @@ model User {
   ownedOrgs         Organization[] @relation("OrgOwner")
   memberships       Member[]
   auditLogs         AuditLog[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -99,6 +100,8 @@ model Workspace {
   pages        Page[]
   themes       Theme[]
   auditLogs    AuditLog[]
+  analyticsEvents AnalyticsEvent[]
+  invitations  WorkspaceInvitation[]
 
   @@index([organizationId])
   @@map("workspaces")
@@ -126,6 +129,7 @@ model Role {
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   members   Member[]
+  invitations WorkspaceInvitation[]
 
   @@index([workspaceId])
   @@map("roles")
@@ -217,7 +221,61 @@ model Subscription {
   @@map("subscriptions")
 }
 
-// ── Auditoría (transversal desde Fase 0) ────────────────────────
+// ── Analítica pública (Fase A — la tabla no existía, ver migración) ──
+
+model AnalyticsEvent {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  blockId     String?  @map("block_id") @db.Uuid
+  eventType   String   @map("event_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("analytics_events")
+}
+
+// ── Recuperación de contraseña ──────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  // Se guarda el hash del token, nunca el token en claro — igual que una
+  // contraseña, si la tabla se filtra los tokens no deben ser usables
+  // directamente.
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+// ── Invitaciones a workspace para emails sin cuenta todavía ─────
+
+model WorkspaceInvitation {
+  id          String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  email       String
+  roleId      String    @map("role_id") @db.Uuid
+  invitedBy   String    @map("invited_by") @db.Uuid
+  status      String    @default("pending") // pending | accepted | revoked | expired
+  expiresAt   DateTime  @map("expires_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId], references: [id])
+
+  @@unique([workspaceId, email])
+  @@index([email])
+  @@map("workspace_invitations")
+}
 
 model AuditLog {
   id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid

@@ -2,7 +2,20 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
+import { SentryInterceptor } from './shared/observability/sentry.interceptor';
+
+// Se inicializa ANTES de crear la app para capturar también errores muy
+// tempranos de arranque. Sin SENTRY_DSN (ver env.schema.ts, es opcional)
+// esto queda como no-op — no rompe nada en local/dev sin cuenta de Sentry.
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? 'development',
+    tracesSampleRate: 0.1,
+  });
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,6 +40,7 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('v1');
+  app.useGlobalInterceptors(new SentryInterceptor());
 
   const config = new DocumentBuilder()
     .setTitle('LinkForge API')
