@@ -9,6 +9,7 @@ import { CreateWorkspaceDialog } from '@/components/create-workspace-dialog';
 import { useActiveWorkspaceStore } from '@/store/active-workspace-store';
 import { useBootstrapSession } from '@/lib/use-bootstrap-session';
 import { workspacesApi } from '@/lib/workspaces-api';
+import { authApi } from '@/lib/auth-api';
 import { Button } from '@/components/form-fields';
 
 const NAV = [
@@ -95,7 +96,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
 
-        <button className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2">
+        <button
+          onClick={() => {
+            authApi.logout().finally(() => router.replace('/login'));
+          }}
+          className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2"
+        >
           <LogOut className="h-4 w-4" /> Cerrar sesión
         </button>
       </aside>

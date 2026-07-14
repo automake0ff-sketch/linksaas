@@ -112,3 +112,34 @@ Se cerraron 6 de los 7 hallazgos pendientes de este documento:
 - ⚠️ **Pendiente a propósito, documentado en `docs/rls-policies-reference.sql`:** `members` y `roles` siguen sin RLS a nivel de BD. La query "listar mis workspaces" es legítimamente cross-tenant (un usuario pertenece a varios) y necesita una segunda variable de sesión (`app.current_user_id`) que todavía no existe. Aplicar RLS estricto ahí con el diseño actual rompería esa query en vez de protegerla — se prefirió dejarlo bien documentado a hacerlo deprisa. La única defensa hoy para esas dos tablas sigue siendo el `WorkspaceAccessGuard` a nivel de aplicación.
 
 **Limitación de esta sesión, igual que la anterior:** tampoco se pudo generar el cliente de Prisma (`binaries.prisma.sh` bloqueado por red) ni aplicar la migración contra un Postgres real. El código se revisó a mano con mucho cuidado y los 29 tests de dominio + lint pasan, pero **la migración de RLS necesita probarse contra un Postgres real con dos workspaces de prueba antes de confiar en ella en producción** — están las instrucciones paso a paso al principio de `prisma/migrations/20260709090000_rls_and_missing_tables/migration.sql`.
+
+**Actualización (sesión posterior): esa verificación ya se hizo.** Se instaló Postgres real, se aplicaron ambas migraciones, y se probó exactamente el escenario que preocupaba:
+- Dos workspaces con su propia página cada uno → cada uno ve solo la suya (confirmado con el rol de la tabla, no superusuario, replicando exactamente cómo conecta la app en Render).
+- Sin ningún contexto de workspace (visitante anónimo) → no ve nada, salvo que la página esté publicada, en cuyo caso sí es visible — y una página de otro workspace sin publicar sigue siendo invisible para ese mismo visitante.
+
+El diseño de RLS de esa sesión es correcto y ya está verificado de extremo a extremo, no solo revisado por lectura.
+
+---
+
+## Addenda: pasada crítica tras conectar `web-app`/`web-public` a la API real (topología cross-domain)
+
+Con `web-app`/`web-public` en `vercel.app` y la API en `onrender.com` — **dominios distintos de verdad** — una revisión crítica encontró varios bugs que un despliegue de un solo dominio (o local) nunca habría revelado:
+
+### El más grave: `WorkspaceAccessGuard` rechazaba TODA petición protegida, siempre
+El guard leía `req.workspaceId`, poblado únicamente por un header `X-Workspace-Id` que **el frontend nunca envía**. Los controllers, mientras tanto, ya leen el workspace correctamente de la URL (`@Param('workspaceId')`). Resultado: cualquier llamada a `/workspaces/:id/page`, `/workspaces/:id/themes` o gestión de miembros devolvía 403 siempre, sin excepción — el editor, los temas y la gestión de equipo estaban rotos de raíz pese a que todo el código de más abajo (casos de uso, dominio, UI) era correcto.
+
+**Corregido:** el guard ahora lee `req.params.workspaceId` (con el header como fallback, por si algún flujo futuro lo puebla de otra forma). Se añadió `workspace-access.guard.spec.ts` con 5 tests, incluyendo uno que reproduce exactamente este caso de regresión.
+
+### Cookie de refresh token con `sameSite: 'lax'` — no sobrevive a un fetch entre dominios
+`SameSite=Lax` solo envía la cookie en navegaciones de nivel superior (pinchar un link), no en peticiones `fetch()`/XHR entre sitios distintos. Con `web-app` en `vercel.app` llamando a la API en `onrender.com`, la cookie httpOnly del refresh token nunca habría vuelto al servidor — el refresh (y por tanto la persistencia de sesión) habría fallado en silencio en producción, aunque funcionara perfectamente en local (mismo origen ahí). Corregido a `sameSite: 'none'` (ya cumplía el requisito de `secure: true`).
+
+### `res.clearCookie()` sin las opciones originales no borra nada
+Mismo principio: `clearCookie(nombre)` sin `path`/`sameSite`/`secure` coincidentes crea una cookie *distinta* con expiración inmediata, dejando la original intacta. "Cerrar sesión" no cerraba la sesión de verdad. Corregido pasando las mismas opciones.
+
+### El botón de "Cerrar sesión" no tenía ningún `onClick`
+Literalmente no hacía nada al pulsarlo. Conectado a un caso real (`POST /auth/logout` + limpiar el token en memoria + redirigir a login).
+
+### Mensaje residual en el frontend
+Tras el fix de auto-verificación de email (ver sección de "Seguimiento" arriba), la página de login seguía mostrando "revisa tu email para verificarla" — una promesa que ya no aplicaba. Corregido.
+
+**Lección repetida de este informe:** cada uno de estos bugs es invisible en un entorno de un solo origen (local, o todo en el mismo dominio) y solo se manifiesta con la topología real de producción. Sigue probando cada pieza nueva contra la topología real en cuanto exista, no solo en local.

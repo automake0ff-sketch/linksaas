@@ -54,7 +54,17 @@ export class AuthController {
   @Post('logout')
   @HttpCode(204)
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(REFRESH_COOKIE);
+    // clearCookie debe recibir las MISMAS opciones (path, sameSite, secure)
+    // con las que se creó la cookie — si no, el navegador la trata como una
+    // cookie distinta y la original (path='/v1/auth') sigue viva. Antes de
+    // este fix, "cerrar sesión" no cerraba la sesión de verdad: el refresh
+    // token seguía siendo válido y usable después de pulsar logout.
+    res.clearCookie(REFRESH_COOKIE, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/v1/auth',
+    });
   }
 
   @Post('refresh')
@@ -73,7 +83,14 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      // 'none' (no 'lax'): web-app vive en vercel.app y la API en onrender.com
+      // (u otro dominio) — son sitios distintos desde el punto de vista del
+      // navegador. Con 'lax', esta cookie NUNCA se habría enviado en las
+      // llamadas fetch() cross-site (solo se envía en navegaciones de nivel
+      // superior, como pinchar un link) — el refresh habría fallado en
+      // silencio en producción real, aunque funcionara en local (mismo
+      // origen allí). 'none' exige 'secure: true', que ya estaba puesto.
+      sameSite: 'none',
       path: '/v1/auth',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
