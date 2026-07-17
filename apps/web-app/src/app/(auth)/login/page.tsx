@@ -19,6 +19,7 @@ export default function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
   const justRegistered = params.get('registered') === '1';
+  const justReset = params.get('reset') === '1';
 
   const {
     register,
@@ -52,6 +53,12 @@ export default function LoginPage() {
           </p>
         )}
 
+        {justReset && (
+          <p className="mt-3 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
+            Contraseña actualizada. Ya puedes iniciar sesión con la nueva.
+          </p>
+        )}
+
         <form
           className="mt-6 flex flex-col gap-4"
           onSubmit={handleSubmit((data) => mutation.mutate(data))}
@@ -70,6 +77,12 @@ export default function LoginPage() {
             {...register('password')}
             error={errors.password?.message}
           />
+          <Link
+            href="/forgot-password"
+            className="-mt-2 self-end text-xs text-text-secondary hover:text-accent hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
           {errors.root && <p className="text-sm text-danger">{errors.root.message}</p>}
 
           <Button type="submit" isLoading={mutation.isPending} className="mt-2">

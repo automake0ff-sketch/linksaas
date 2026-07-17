@@ -84,12 +84,13 @@ export class PublicPagesController {
     });
     if (!workspace) return; // no revelamos si el slug existe con un error distinto
 
-    await this.prisma.$executeRawUnsafe(
-      `INSERT INTO analytics_events (workspace_id, block_id, event_type) VALUES ($1, $2, $3)`,
-      workspace.id,
-      dto.blockId ?? null,
-      dto.eventType,
-    );
+    await this.prisma.analyticsEvent.create({
+      data: {
+        workspaceId: workspace.id,
+        blockId: dto.blockId ?? null,
+        eventType: dto.eventType,
+      },
+    });
     // En producción esto encola en BullMQ en vez de escribir síncronamente
     // (ver docs/03-Base-de-Datos.md, tabla particionada de alto volumen) —
     // el encolado se añade cuando se implemente el worker en Fase A.

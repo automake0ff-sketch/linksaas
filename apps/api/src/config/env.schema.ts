@@ -16,6 +16,13 @@ export const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
+  // Sin RESEND_API_KEY, NotificationsModule usa el adaptador no-op (registra
+  // en log, no envía nada) — no bloquea el arranque ni el registro/reset.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  // URL pública de web-app, usada para construir enlaces en los emails
+  // (ej. el link de "restablecer contraseña"). Sin ella, cae a localhost.
+  FRONTEND_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

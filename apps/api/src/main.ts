@@ -42,14 +42,20 @@ async function bootstrap() {
   app.setGlobalPrefix('v1');
   app.useGlobalInterceptors(new SentryInterceptor());
 
-  const config = new DocumentBuilder()
-    .setTitle('LinkForge API')
-    .setDescription('API pública y del panel de LinkForge')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('v1/docs', app, document);
+  // T8 de la auditoría de lanzamiento: Swagger montado sin condición expone
+  // el mapa completo de la API (rutas, DTOs, forma de cada payload) a
+  // cualquiera — reconocimiento gratuito para un atacante. No es una fuga
+  // de datos directa, pero no hay razón para exponerlo en producción.
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('LinkForge API')
+      .setDescription('API pública y del panel de LinkForge')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('v1/docs', app, document);
+  }
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);

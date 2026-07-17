@@ -1,5 +1,9 @@
 databases:
   - name: linkforge-db
+    # ⚠️ T2 de docs/12-Plan-Lanzamiento.md: el plan free de Render no tiene
+    # backups automáticos y puede eliminar la BD por inactividad. Cambiar a
+    # un plan de pago (starter o superior) ANTES de aceptar el primer
+    # cliente real, y activar backups + probar una restauración de verdad.
     plan: free
     databaseName: linkforge
     user: linkforge
@@ -8,6 +12,8 @@ services:
   - type: web
     name: linkforge-api
     runtime: docker
+    # ⚠️ Mismo aviso que la BD: el plan free tiene cold starts (caída de
+    # disponibilidad percibida) — subir de plan junto con la base de datos.
     plan: free
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
@@ -25,5 +31,33 @@ services:
         generateValue: true
       - key: PLATFORM_DOMAIN
         value: linkforge.com
+      # ⚠️ T3, EL MÁS IMPORTANTE: esto tiene que ser la URL real de
+      # web-app y web-public en Vercel (https://..., separadas por coma,
+      # SIN barra final) antes de anunciar el lanzamiento. Con localhost
+      # aquí, nada funciona para ningún cliente real — el navegador
+      # bloquea la petición por CORS.
       - key: CORS_ORIGINS
         value: http://localhost:3000,http://localhost:3002
+      # T4: sin esto, el rate limiting es por instancia (memoria del
+      # proceso) — se multiplica por el número de réplicas en cuanto haya
+      # más de una. sync:false = Render no la pisa en cada redeploy;
+      # rellénala a mano desde el dashboard cuando aprovisiones Redis.
+      - key: REDIS_URL
+        sync: false
+      # T5: sin esto, un error 500 en producción no deja ningún rastro
+      # salvo logs de stdout sin estructurar. Crea un proyecto en
+      # sentry.io y pega el DSN aquí manualmente.
+      - key: SENTRY_DSN
+        sync: false
+      # T6: sin esto, el registro y el reset de contraseña no envían
+      # ningún email de verdad (caen al adaptador no-op, que solo registra
+      # en log). Crea una cuenta en resend.com y pega la API key aquí.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      # URL pública de web-app — se usa para construir los enlaces de los
+      # emails (ej. el link de "restablecer contraseña"). Debe apuntar al
+      # dominio real de producción, no a localhost.
+      - key: FRONTEND_URL
+        sync: false

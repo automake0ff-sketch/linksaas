@@ -67,6 +67,18 @@ export default function RegisterPage() {
           />
           {errors.root && <p className="text-sm text-danger">{errors.root.message}</p>}
 
+          <p className="text-xs text-text-secondary">
+            Al crear una cuenta, aceptas los{' '}
+            <Link href="/terms" className="underline hover:text-accent">
+              términos de servicio
+            </Link>{' '}
+            y la{' '}
+            <Link href="/privacy" className="underline hover:text-accent">
+              política de privacidad
+            </Link>
+            .
+          </p>
+
           <Button type="submit" isLoading={mutation.isPending} className="mt-2">
             Crear cuenta
           </Button>

@@ -14,6 +14,7 @@ import { SharedInfraModule } from './shared/infrastructure/shared-infra.module';
 import { TenantMiddleware } from './shared/middleware/tenant.middleware';
 import { PublicAuthGuard } from './shared/auth/public-route.guard';
 import { HealthController } from './shared/health/health.controller';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { envSchema } from './config/env.schema';
 
 @Module({
@@ -42,6 +43,7 @@ import { envSchema } from './config/env.schema';
     }),
     JwtModule.register({ secret: process.env.JWT_SECRET }),
     SharedInfraModule,
+    NotificationsModule,
     IamModule,
     TenancyModule,
     PagesModule,

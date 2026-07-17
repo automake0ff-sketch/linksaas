@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
 import { QueryProvider } from '@/components/query-provider';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import '@/styles/globals.css';
 
 const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display' });
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="font-body antialiased">
         <QueryProvider>{children}</QueryProvider>
+        <CookieConsentBanner />
       </body>
     </html>
   );
