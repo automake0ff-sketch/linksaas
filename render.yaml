@@ -31,13 +31,11 @@ services:
         generateValue: true
       - key: PLATFORM_DOMAIN
         value: linkforge.com
-      # ⚠️ T3, EL MÁS IMPORTANTE: esto tiene que ser la URL real de
-      # web-app y web-public en Vercel (https://..., separadas por coma,
-      # SIN barra final) antes de anunciar el lanzamiento. Con localhost
-      # aquí, nada funciona para ningún cliente real — el navegador
-      # bloquea la petición por CORS.
+      # T3 resuelto: URLs reales de producción. Se mantiene también
+      # localhost para que el flujo local (docker compose) siga
+      # funcionando sin tocar esta variable.
       - key: CORS_ORIGINS
-        value: http://localhost:3000,http://localhost:3002
+        value: https://linksaas-web-app-five.vercel.app,https://linksaas-web-public.vercel.app,http://localhost:3000,http://localhost:3002
       # T4: sin esto, el rate limiting es por instancia (memoria del
       # proceso) — se multiplica por el número de réplicas en cuanto haya
       # más de una. sync:false = Render no la pisa en cada redeploy;
