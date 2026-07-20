@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -15,7 +16,13 @@ interface LoginResponse {
   requiresTwoFactor: boolean;
 }
 
-export default function LoginPage() {
+// Next.js exige que cualquier componente que use useSearchParams() esté
+// envuelto en <Suspense> para poder pre-renderizarse en build — sin esto,
+// "next build" falla en el paso "Generating static pages" (visto en el
+// deploy real de Vercel). Se separa en dos componentes: el formulario real
+// (que lee los query params) y la página exportada, que solo pone el
+// Suspense alrededor.
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const justRegistered = params.get('registered') === '1';
@@ -98,5 +105,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

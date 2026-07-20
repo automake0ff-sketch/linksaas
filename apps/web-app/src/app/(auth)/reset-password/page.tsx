@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,7 +20,9 @@ const ResetPasswordSchema = z.object({
 });
 type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
 
-export default function ResetPasswordPage() {
+// Mismo motivo que en login/page.tsx: useSearchParams() exige un Suspense
+// boundary para poder prerenderizarse en build.
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -79,5 +82,13 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
