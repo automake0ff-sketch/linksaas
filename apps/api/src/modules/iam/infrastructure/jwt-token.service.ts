@@ -14,7 +14,13 @@ export class JwtTokenService implements TokenServicePort {
   }
 
   signRefreshToken(payload: { sub: string }): string {
-    return this.jwt.sign(payload, { expiresIn: '30d', subject: payload.sub });
+    // NUNCA pasar también `subject:` aquí — el payload ya incluye `sub`,
+    // y la librería jsonwebtoken rechaza tener las dos cosas a la vez
+    // ("Bad options.subject option. The payload already has a sub
+    // property") porque no sabe cuál debe prevalecer. Este bug rompía
+    // TODO login real (nunca se detectó antes porque los tests unitarios
+    // mockean JwtService, sin pasar por la librería real).
+    return this.jwt.sign(payload, { expiresIn: '30d' });
   }
 
   verifyRefreshToken(token: string): { sub: string } | null {
