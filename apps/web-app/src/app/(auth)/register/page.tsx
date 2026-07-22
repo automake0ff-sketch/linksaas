@@ -7,7 +7,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { RegisterInputSchema, type RegisterInput } from '@linkforge/contracts';
 import { apiFetch, ApiError } from '@/lib/api-client';
+import { setAccessToken } from '@/lib/auth-token-store';
 import { TextField, Button } from '@/components/form-fields';
+
+interface LoginResponse {
+  accessToken?: string;
+  requiresTwoFactor: boolean;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,12 +25,24 @@ export default function RegisterPage() {
   } = useForm<RegisterInput>({ resolver: zodResolver(RegisterInputSchema) });
 
   const mutation = useMutation({
-    mutationFn: (input: RegisterInput) =>
-      apiFetch<{ userId: string; message: string }>('/auth/register', {
+    mutationFn: async (input: RegisterInput) => {
+      await apiFetch<{ userId: string; message: string }>('/auth/register', {
         method: 'POST',
         body: JSON.stringify(input),
-      }),
-    onSuccess: () => router.push('/login?registered=1'),
+      });
+      // Auto-login inmediatamente después del registro — antes esto
+      // mandaba de vuelta a /login pidiendo escribir el email y la
+      // contraseña otra vez, fricción innecesaria justo en el momento
+      // más importante (la primera impresión).
+      return apiFetch<LoginResponse>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: input.email, password: input.password }),
+      });
+    },
+    onSuccess: (res) => {
+      if (res.accessToken) setAccessToken(res.accessToken);
+      router.push('/dashboard');
+    },
     onError: (error: ApiError) => {
       // Mensaje genérico también en la UI — no revelamos si el fallo fue
       // "email ya existe" con detalle distinto a cualquier otro error.
