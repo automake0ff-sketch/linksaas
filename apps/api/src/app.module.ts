@@ -10,6 +10,7 @@ import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { PagesModule } from './modules/pages/pages.module';
 import { ThemesModule } from './modules/themes/themes.module';
 import { PublicPagesModule } from './modules/public-pages/public-pages.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SharedInfraModule } from './shared/infrastructure/shared-infra.module';
 import { TenantMiddleware } from './shared/middleware/tenant.middleware';
 import { PublicAuthGuard } from './shared/auth/public-route.guard';
@@ -49,6 +50,7 @@ import { envSchema } from './config/env.schema';
     PagesModule,
     ThemesModule,
     PublicPagesModule,
+    AnalyticsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: PublicAuthGuard }],
